@@ -1,18 +1,31 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
+import { Tabs } from "expo-router";
+import { Blender, PackageSearch } from 'lucide-react-native';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
 
-SplashScreen.preventAutoHideAsync();
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+export default function RootLayout() {
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
+    <Tabs screenOptions={
+      {
+        tabBarInactiveTintColor: "#4b4b4b",
+        tabBarActiveTintColor: "black"
+      }
+    }>
+      <Tabs.Screen 
+        name="index"
+        options={{
+          title: "Receitas Fetch",
+          tabBarLabel: "Fetch",
+          tabBarIcon: (({ color, focused, size }) => <Blender color={color} focusable={focused} size={size} />)
+        }}
+      />
+      <Tabs.Screen 
+        name="axios"
+        options={{
+          title: "Receitas Axios",
+          tabBarLabel: "Axios",
+          tabBarIcon: (({ color, focused, size }) => <PackageSearch color={color} focusable={focused} size={size} />)
+        }}
+      />
+    </Tabs>
   );
 }

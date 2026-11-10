@@ -1,0 +1,36 @@
+{
+  "produtos": [
+    {
+      "id": "1",
+      "nome": "Teclado",
+      "valor": 200.99
+    }
+  ],
+  "receitas": [
+    {
+      "nome": "Nova Receita",
+      "tempoPreparo": 154,
+      "ingredientes": "Alma dos derrotados",
+      "id": "UyVOkcH_8Nc"
+    },
+    {
+      "nome": "😉😉😉😉😉😉😉",
+      "tempoPreparo": 184,
+      "ingredientes": "Alma dos derrotados",
+      "id": "2t7u4M7jCtY"
+    },
+    {
+      "nome": "Teste",
+      "tempoPreparo": 303,
+      "ingredientes": "Alma dos derrotados",
+      "id": "W38aahc0m1Y"
+    },
+    {
+      "nome": "Teste",
+      "tempoPreparo": 145,
+      "ingredientes": "Alma dos derrotados",
+      "id": "jxarXF63xbM"
+    }
+  ],
+  "$schema": "./node_modules/json-server/schema.json"
+}

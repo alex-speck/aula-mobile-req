@@ -1,98 +1,109 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useReceitasFetch } from "@/hook/useReceitasFetch";
+import { Receita } from "@/types/receita";
+import { Clock } from "lucide-react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, Button, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
-  }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
-  return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
+function getRandomInt(min: number, max: number) {
+  const minCeiled = Math.ceil(min);
+  const maxFloored = Math.floor(max);
+  return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled); 
 }
 
-export default function HomeScreen() {
+export default function Index() {
+  const { listar, criar } = useReceitasFetch()
+  const [receitas, setReceitas] = useState<Receita[]>([])
+  const [nomeReceita, setNomeReceita] = useState<string>("")
+  const [refreshing, setRefreshing] = useState<boolean>(false)
+
+  const carregarReceitas = async () => {
+    if(refreshing) return;
+    try {
+      setRefreshing(true)
+      setReceitas(await listar())
+    } catch (error) {
+      
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
+  const criarReceita = async () => {
+    const data = {
+      nome: nomeReceita,
+      tempoPreparo: getRandomInt(10, 360),
+      ingredientes: "Alma dos derrotados"
+    }
+
+    try {
+      await criar(data)
+      setNomeReceita("")
+      carregarReceitas()
+    } catch (error) {
+      Alert.alert("Erro ao criar receita :(")
+    }
+  }
+
+  useEffect(() => {
+    carregarReceitas()
+  }, [])
+
+  if (refreshing) return <ActivityIndicator style={{ alignSelf: 'center'}}/>
+
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+    <View style={styles.container}>
+      <View style={styles.inputContainer}>
+        <TextInput style={styles.input} value={nomeReceita} placeholder="Nome Receita" onChangeText={(t) => setNomeReceita(t)} />
+        <Button title="Enviar" onPress={criarReceita} />
+      </View>
+      <View style={styles.separator}></View>
+      <FlatList
+        data={receitas}
+        onRefresh={() => carregarReceitas()}
+        refreshing={refreshing}
+        keyExtractor={(r) => r.id}
+        renderItem={({ item }) => (
+          <Pressable style={styles.itemContainer}>
+            <View style={{ flexDirection: 'row', gap: 10}}>
+              <Text style={{ fontSize: 10, alignSelf: 'center', backgroundColor: "lightgray", borderRadius: 15, padding: 1 }}>#{item.id}</Text>
+              <Text>{item.nome}</Text>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 15}}>
+              <Text>{item.ingredientes}</Text>
+              <Text><Clock/> {item.tempoPreparo} min</Text>
+            </View>
+          </Pressable>
+        )}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
+    alignItems: "center",
+    justifyContent: "center"
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
+  inputContainer: {
+    width: 400
   },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
+  input: {
+    minWidth: 400
   },
-  title: {
-    textAlign: 'center',
+  separator: {
+    backgroundColor: "#000000",
+    minWidth: '95%',
+    borderWidth: 1,
+    marginTop: 15,
+    marginBottom: 15
   },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
+  itemContainer: {
+    minWidth: 350,
+    maxWidth: '90%',
+    backgroundColor: "#FFF",
+    padding: 15,
+    margin: 10,
+    borderRadius: 15
+  }
 });
