@@ -1,57 +1,49 @@
 import { useReceitasAxios } from "@/hook/useReceitasAxios";
-import { Receita } from "@/types/receita";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { Clock } from "lucide-react-native";
-import { useEffect, useState } from "react";
-import { Alert, Button, FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet, Text, View } from "react-native";
 
-function getRandomInt(min: number, max: number) {
-  const minCeiled = Math.ceil(min);
-  const maxFloored = Math.floor(max);
-  return Math.floor(Math.random() * (maxFloored - minCeiled) + minCeiled); 
-}
 
 function TanstackRequest() {
-    const { listar, criar } = useReceitasAxios();
-    const [nomeReceita, setNomeReceita] = useState<string>("")
-    const [receitas, setReceitas] = useState<Receita[]>([])
 
-    const carregarReceitas = async () => {
-    try {
-      setReceitas(await listar())
-    } catch (error) {
-      Alert.alert("Erro", "Erro ao consultar")
+  const { listar, criar } = useReceitasAxios()
+
+  const { data, isLoading, isError, refetch } = useQuery({
+    queryKey: ['receitas'],
+    queryFn: listar,
+    retry: 3,
+    retryDelay: 1000,
+    staleTime: 1*60*1000
+  })
+
+  const criarMutation = useMutation({
+    mutationKey: ['criar-receita'],
+    mutationFn: criar,
+    onSuccess: () => {
+      Alert.alert("Receita cadastrada com sucesso")
+      refetch()
+    },
+    onError: () => {
+      Alert.alert("Erro ao cadastrar a receita")
+    },
+    onSettled: () => {
+      console.log("Finalizado!")
     }
+  })
+
+  if (isLoading) {
+    return (
+      <View style={{ justifyContent: 'center', alignItems: 'center'  }}>
+        <Text>Carregando...</Text>
+        <ActivityIndicator color={'blue'} />
+      </View>
+    )
   }
-
-  const criarReceita = async () => {
-    const data = {
-      nome: nomeReceita,
-      tempoPreparo: getRandomInt(10, 360),
-      ingredientes: "Alma dos derrotados"
-    }
-
-    try {
-      await criar(data)
-      setNomeReceita("")
-      carregarReceitas()
-    } catch (error) {
-      Alert.alert("Erro ao criar receita :(")
-    }
-  }
-
-  useEffect(() => {
-    carregarReceitas()
-  }, [])
-
+  
   return (
     <View style={styles.container}>
-      <View style={styles.inputContainer}>
-        <TextInput style={styles.input} value={nomeReceita} placeholder="Nome Receita" onChangeText={(t) => setNomeReceita(t)} />
-        <Button title="Enviar" onPress={criarReceita} />
-      </View>
-      <View style={styles.separator}></View>
       <FlatList
-        data={receitas}
+        data={data}
         keyExtractor={(r) => r.id}
         renderItem={({ item }) => (
           <Pressable style={styles.itemContainer}>
@@ -67,7 +59,7 @@ function TanstackRequest() {
         )}
       />
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
